@@ -68,6 +68,8 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
+import android.provider.ContactsContract;
 
 import com.android.internal.telephony.ITelephony;
 
@@ -79,6 +81,12 @@ import android.graphics.Color;
 import android.preference.PreferenceManager;
 import android.provider.CallLog.Calls;
 import android.widget.ImageButton;
+
+import java.util.ArrayList;
+import java.util.regex.Pattern;
+import java.util.Iterator;
+import java.util.ListIterator;
+import java.util.regex.Matcher;
 
 /**
  * Dialer activity that displays the typical twelve key interface.
@@ -131,6 +139,13 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
 
     // determines if we want to playback local DTMF tones.
     private boolean mDTMFToneEnabled;
+
+    private int searchPosition = 0;
+    private ArrayList<Integer> introducedChars = new ArrayList<Integer>();
+    private static final char[][] characters = { {}, { 'a', 'b', 'c' }, { 'd', 'e', 'f' },
+                                                 { 'g', 'h', 'i' }, { 'j', 'k', 'l' },
+                                                 { 'm', 'n', 'o' }, { 'p', 'q', 'r', 's' },
+                                                 { 't', 'u', 'v' }, { 'w', 'x', 'y', 'z' } };
 
     // Vibration (haptic feedback) for dialer key presses.
     private Vibrator mVibrator;
@@ -272,7 +287,7 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
         // Set up the "dialpad chooser" UI; see showDialpadChooser().
         mDialpadChooser = (ListView) findViewById(R.id.dialpadChooser);
         mDialpadChooser.setOnItemClickListener(this);
-        
+
         //Wysi: Should remove this since it's also in onResume. To be tested.
         //updateDialer();
 
@@ -724,6 +739,74 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
     }
 
     private void keyPressed(int keyCode) {
+        int index = -1;
+        switch (keyCode) {
+            case KeyEvent.KEYCODE_1:
+                index = 0;
+                break;
+            case KeyEvent.KEYCODE_2:
+                index = 1;
+                break;
+            case KeyEvent.KEYCODE_3:
+                index = 2;
+                break;
+            case KeyEvent.KEYCODE_4:
+                index = 3;
+                break;
+            case KeyEvent.KEYCODE_5:
+                index = 4;
+                break;
+            case KeyEvent.KEYCODE_6:
+                index = 5;
+                break;
+            case KeyEvent.KEYCODE_7:
+                index = 6;
+                break;
+            case KeyEvent.KEYCODE_8:
+                index = 7;
+                break;
+            case KeyEvent.KEYCODE_9:
+                index = 8;
+                break;
+            default:
+                break;
+        }
+        if (index > -1) {
+            introducedChars.add(index);
+
+            String query = new String("^");
+            Iterator<Integer> it = introducedChars.iterator();
+            while (it.hasNext()) {
+                Integer index_ = it.next();
+                char[] possibleCharacters_ = characters[index_];
+                String possibleCharacters = "[";
+                for (int i = 0; i < possibleCharacters_.length; ++i) {
+                    possibleCharacters += possibleCharacters_[i];
+                }
+                possibleCharacters += "]";
+                query += possibleCharacters;
+            }
+            if (query != null) {
+                Log.d(TAG, "THE PATTERN: " + query);
+                Cursor c = managedQuery(ContactsContract.Contacts.CONTENT_URI, null, null, null, null);
+                while (c.moveToNext()) {
+                    String name = c.getString(c.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
+                    Log.d(TAG, "Pattern: " + query);
+                    Log.d(TAG, "Name: " + name);
+                    Log.d(TAG, "=====");
+                    if (name != null) {
+                        Pattern pattern = Pattern.compile(query, Pattern.CASE_INSENSITIVE);
+                        Matcher matcher = pattern.matcher(name);
+                        if (matcher.find()) {
+                            Toast.makeText(this, "Found: " + name, Toast.LENGTH_SHORT).show();
+                            break;
+                        }
+                    }
+                }
+            }
+
+            searchPosition++;
+        }
         KeyEvent event = new KeyEvent(KeyEvent.ACTION_DOWN, keyCode);
         mDigits.onKeyDown(keyCode, event);
     }
@@ -805,6 +888,10 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
             }
             case R.id.deleteButton: {
                 keyPressed(KeyEvent.KEYCODE_DEL);
+                if (searchPosition > 0) {
+                    searchPosition--;
+                    introducedChars.remove(searchPosition);
+                }
                 break;
             }
             case R.id.dialButton: {
