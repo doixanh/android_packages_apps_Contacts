@@ -87,6 +87,7 @@ import java.util.regex.Pattern;
 import java.util.Iterator;
 import java.util.ListIterator;
 import java.util.regex.Matcher;
+import java.util.Stack;
 
 /**
  * Dialer activity that displays the typical twelve key interface.
@@ -141,11 +142,10 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
     private boolean mDTMFToneEnabled;
 
     private int searchPosition = 0;
+    private Stack<ArrayList<String>> previousCursors = new Stack<ArrayList<String>>();
     private ArrayList<Integer> introducedChars = new ArrayList<Integer>();
-    private static final char[][] characters = { {}, { 'a', 'b', 'c' }, { 'd', 'e', 'f' },
-                                                 { 'g', 'h', 'i' }, { 'j', 'k', 'l' },
-                                                 { 'm', 'n', 'o' }, { 'p', 'q', 'r', 's' },
-                                                 { 't', 'u', 'v' }, { 'w', 'x', 'y', 'z' } };
+    private static final String[] characters = { "abc", "def", "ghi", "jkl", "mno", "pqrs", "tuv",
+                                                 "wxyz" };
 
     // Vibration (haptic feedback) for dialer key presses.
     private Vibrator mVibrator;
@@ -741,32 +741,29 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
     private void keyPressed(int keyCode) {
         int index = -1;
         switch (keyCode) {
-            case KeyEvent.KEYCODE_1:
+            case KeyEvent.KEYCODE_2:
                 index = 0;
                 break;
-            case KeyEvent.KEYCODE_2:
+            case KeyEvent.KEYCODE_3:
                 index = 1;
                 break;
-            case KeyEvent.KEYCODE_3:
+            case KeyEvent.KEYCODE_4:
                 index = 2;
                 break;
-            case KeyEvent.KEYCODE_4:
+            case KeyEvent.KEYCODE_5:
                 index = 3;
                 break;
-            case KeyEvent.KEYCODE_5:
+            case KeyEvent.KEYCODE_6:
                 index = 4;
                 break;
-            case KeyEvent.KEYCODE_6:
+            case KeyEvent.KEYCODE_7:
                 index = 5;
                 break;
-            case KeyEvent.KEYCODE_7:
+            case KeyEvent.KEYCODE_8:
                 index = 6;
                 break;
-            case KeyEvent.KEYCODE_8:
-                index = 7;
-                break;
             case KeyEvent.KEYCODE_9:
-                index = 8;
+                index = 7;
                 break;
             default:
                 break;
@@ -777,34 +774,41 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
             String query = new String("^");
             Iterator<Integer> it = introducedChars.iterator();
             while (it.hasNext()) {
-                Integer index_ = it.next();
-                char[] possibleCharacters_ = characters[index_];
-                String possibleCharacters = "[";
-                for (int i = 0; i < possibleCharacters_.length; ++i) {
-                    possibleCharacters += possibleCharacters_[i];
-                }
-                possibleCharacters += "]";
-                query += possibleCharacters;
+                query += "[" + characters[it.next()] + "]";
             }
-            if (query != null) {
-                Log.d(TAG, "THE PATTERN: " + query);
+
+            if (previousCursors.empty()) {
+                ArrayList<String> contacts = new ArrayList<String>();
                 Cursor c = managedQuery(ContactsContract.Contacts.CONTENT_URI, null, null, null, null);
                 while (c.moveToNext()) {
-                    String name = c.getString(c.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
-                    Log.d(TAG, "Pattern: " + query);
-                    Log.d(TAG, "Name: " + name);
-                    Log.d(TAG, "=====");
-                    if (name != null) {
-                        Pattern pattern = Pattern.compile(query, Pattern.CASE_INSENSITIVE);
-                        Matcher matcher = pattern.matcher(name);
-                        if (matcher.find()) {
-                            Toast.makeText(this, "Found: " + name, Toast.LENGTH_SHORT).show();
-                            break;
-                        }
+                    if (Integer.parseInt(c.getString(c.getColumnIndex(ContactsContract.Contacts.HAS_PHONE_NUMBER))) > 0) {
+                        contacts.add(c.getString(c.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME)));
+                    }
+                }
+                previousCursors.push(contacts);
+            }
+
+            ArrayList<String> contacts = previousCursors.peek();
+
+            ArrayList<String> newContacts = new ArrayList<String>();
+            Iterator<String> contactIt = contacts.iterator();
+            while (contactIt.hasNext()) {
+                String name = contactIt.next();
+                if (name != null) {
+                    Pattern pattern = Pattern.compile(query, Pattern.CASE_INSENSITIVE);
+                    Matcher matcher = pattern.matcher(name);
+                    if (matcher.find()) {
+                        newContacts.add(name);
+                        Log.d(TAG, name);
                     }
                 }
             }
 
+            if (newContacts.size() == 1) {
+                Toast.makeText(this, "Found: " + newContacts.get(0), Toast.LENGTH_SHORT).show();
+            }
+
+            previousCursors.push(newContacts);
             searchPosition++;
         }
         KeyEvent event = new KeyEvent(KeyEvent.ACTION_DOWN, keyCode);
@@ -887,11 +891,12 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
                 break;
             }
             case R.id.deleteButton: {
-                keyPressed(KeyEvent.KEYCODE_DEL);
                 if (searchPosition > 0) {
                     searchPosition--;
+                    previousCursors.pop();
                     introducedChars.remove(searchPosition);
                 }
+                keyPressed(KeyEvent.KEYCODE_DEL);
                 break;
             }
             case R.id.dialButton: {
@@ -949,6 +954,9 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
                 digits.clear();
                 //Wysie: Invoke checkForNumber() to disable button
                 checkForNumber();
+                searchPosition = 0;
+                introducedChars = new ArrayList<Integer>();
+                previousCursors = new Stack<ArrayList<String>>();
                 // TODO: The framework forgets to clear the pressed
                 // status of disabled button. Until this is fixed,
                 // clear manually the pressed status. b/2133127
