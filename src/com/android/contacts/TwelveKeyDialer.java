@@ -146,6 +146,7 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
     private ArrayList<Integer> introducedChars = new ArrayList<Integer>();
     private static final String[] characters = { "abc", "def", "ghi", "jkl", "mno", "pqrs", "tuv",
                                                  "wxyz" };
+    private ResultListAdapter mResultListAdapter;
 
     // Vibration (haptic feedback) for dialer key presses.
     private Vibrator mVibrator;
@@ -255,6 +256,10 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
         mDigits.setKeyListener(DialerKeyListener.getInstance());
         mDigits.setOnClickListener(this);
         mDigits.setOnKeyListener(this);
+
+        ListView resultList = (ListView) findViewById(R.id.resultList);
+        mResultListAdapter = new ResultListAdapter(this, resultList);
+        resultList.setAdapter(mResultListAdapter);
 
         maybeAddNumberFormatting();
 
@@ -804,12 +809,9 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
                 }
             }
 
-            if (newContacts.size() == 1) {
-                Toast.makeText(this, "Found: " + newContacts.get(0), Toast.LENGTH_SHORT).show();
-            }
-
             previousCursors.push(newContacts);
             searchPosition++;
+            mResultListAdapter.notifyDataSetChanged();
         }
         KeyEvent event = new KeyEvent(KeyEvent.ACTION_DOWN, keyCode);
         mDigits.onKeyDown(keyCode, event);
@@ -1244,6 +1246,45 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
             ImageView icon = (ImageView) convertView.findViewById(R.id.icon);
             icon.setImageBitmap(mChoiceItems[position].icon);
 
+            return convertView;
+        }
+    }
+
+    public class ResultListAdapter extends BaseAdapter {
+        private LayoutInflater mInflater;
+
+        public ResultListAdapter(Context context, ListView listview) {
+            mInflater = LayoutInflater.from(context);
+            listview.setAdapter(this);
+        }
+
+        public int getCount() {
+            if (previousCursors.empty()) {
+                return 0;
+            }
+            return previousCursors.peek().size();
+        }
+
+        public Object getItem(int i) {
+            if (previousCursors.empty()) {
+                return null;
+            }
+            return previousCursors.peek().get(i);
+        }
+
+        public long getItemId(int i) {
+            return i;
+        }
+
+        public View getView(int position, View convertView, ViewGroup parent) {
+            if (previousCursors.empty() || previousCursors.peek().size() <= position) {
+                return null;
+            }
+            if (convertView == null) {
+                convertView = mInflater.inflate(R.layout.dialpad_chooser_list_item_small, null);
+            }
+            TextView text = (TextView) convertView.findViewById(R.id.text);
+            text.setText(previousCursors.peek().get(position));
             return convertView;
         }
     }

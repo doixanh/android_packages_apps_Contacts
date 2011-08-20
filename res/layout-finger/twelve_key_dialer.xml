@@ -44,6 +44,11 @@
         android:contentDescription="@string/description_digits_edittext"
     />
 
+    <ListView android:id="@+id/resultList"
+        android:layout_width="match_parent"
+        android:layout_height="74dip"
+    />
+
     <!-- Keypad section -->
     <include layout="@layout/dialpad" />
 

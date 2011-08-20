@@ -42,6 +42,11 @@
         android:layout_weight="0"
     />
 
+    <ListView android:id="@+id/resultList"
+        android:layout_width="match_parent"
+        android:layout_height="74dip"
+    />
+
     <!-- Keypad section -->
     <include layout="@layout/dialpad" />
 
