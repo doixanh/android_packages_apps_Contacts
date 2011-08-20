@@ -894,6 +894,9 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
                     searchPosition--;
                     previousCursors.pop();
                 }
+                if (searchPosition == 0) {
+                    previousCursors = new Stack<ArrayList<String>>();
+                }
                 keyPressed(KeyEvent.KEYCODE_DEL);
                 mResultListAdapter.notifyDataSetChanged();
                 break;
