@@ -83,11 +83,10 @@ import android.provider.CallLog.Calls;
 import android.widget.ImageButton;
 
 import java.util.ArrayList;
-import java.util.regex.Pattern;
 import java.util.Iterator;
 import java.util.ListIterator;
-import java.util.regex.Matcher;
 import java.util.Stack;
+import java.text.Collator;
 
 /**
  * Dialer activity that displays the typical twelve key interface.
@@ -143,7 +142,6 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
 
     private int searchPosition = 0;
     private Stack<ArrayList<String>> previousCursors = new Stack<ArrayList<String>>();
-    private ArrayList<Integer> introducedChars = new ArrayList<Integer>();
     private static final String[] characters = { "abc", "def", "ghi", "jkl", "mno", "pqrs", "tuv",
                                                  "wxyz" };
     private ResultListAdapter mResultListAdapter;
@@ -774,14 +772,6 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
                 break;
         }
         if (index > -1) {
-            introducedChars.add(index);
-
-            String query = new String("^");
-            Iterator<Integer> it = introducedChars.iterator();
-            while (it.hasNext()) {
-                query += "[" + characters[it.next()] + "]";
-            }
-
             if (previousCursors.empty()) {
                 ArrayList<String> contacts = new ArrayList<String>();
                 Cursor c = managedQuery(ContactsContract.Contacts.CONTENT_URI, null, null, null, null);
@@ -795,16 +785,22 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
 
             ArrayList<String> contacts = previousCursors.peek();
 
+            Collator collator = Collator.getInstance();
+            collator.setStrength(Collator.PRIMARY);
+
             ArrayList<String> newContacts = new ArrayList<String>();
             Iterator<String> contactIt = contacts.iterator();
             while (contactIt.hasNext()) {
                 String name = contactIt.next();
                 if (name != null) {
-                    Pattern pattern = Pattern.compile(query, Pattern.CASE_INSENSITIVE);
-                    Matcher matcher = pattern.matcher(name);
-                    if (matcher.find()) {
-                        newContacts.add(name);
-                        Log.d(TAG, name);
+                    Character testedChar = name.charAt(searchPosition);
+                    String testedChars = characters[index];
+                    for (int i = 0; i < testedChars.length(); ++i) {
+                        Character testedChar2 = testedChars.charAt(i);
+                        if (collator.compare(testedChar.toString(), testedChar2.toString()) == 0) {
+                            newContacts.add(name);
+                            break;
+                        }
                     }
                 }
             }
@@ -896,7 +892,6 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
                 if (searchPosition > 0) {
                     searchPosition--;
                     previousCursors.pop();
-                    introducedChars.remove(searchPosition);
                 }
                 keyPressed(KeyEvent.KEYCODE_DEL);
                 mResultListAdapter.notifyDataSetChanged();
@@ -958,8 +953,8 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
                 //Wysie: Invoke checkForNumber() to disable button
                 checkForNumber();
                 searchPosition = 0;
-                introducedChars = new ArrayList<Integer>();
                 previousCursors = new Stack<ArrayList<String>>();
+                mResultListAdapter.notifyDataSetChanged();
                 // TODO: The framework forgets to clear the pressed
                 // status of disabled button. Until this is fixed,
                 // clear manually the pressed status. b/2133127
