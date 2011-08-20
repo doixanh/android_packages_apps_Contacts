@@ -145,6 +145,7 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
     private Stack<ArrayList<String>> previousCursors = new Stack<ArrayList<String>>();
     private static final String[] characters = { "abc", "def", "ghi", "jkl", "mno", "pqrs", "tuv",
                                                  "wxyz" };
+    private ListView mResultList;
     private ResultListAdapter mResultListAdapter;
 
     // Vibration (haptic feedback) for dialer key presses.
@@ -259,9 +260,9 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
         mCollator = Collator.getInstance();
         mCollator.setStrength(Collator.PRIMARY);
 
-        ListView resultList = (ListView) findViewById(R.id.resultList);
-        mResultListAdapter = new ResultListAdapter(this, resultList);
-        resultList.setAdapter(mResultListAdapter);
+        mResultList = (ListView) findViewById(R.id.resultList);
+        mResultListAdapter = new ResultListAdapter(this, mResultList);
+        mResultList.setAdapter(mResultListAdapter);
 
         maybeAddNumberFormatting();
 
@@ -793,7 +794,7 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
             Iterator<String> contactIt = contacts.iterator();
             while (contactIt.hasNext()) {
                 String name = contactIt.next();
-                if (name != null) {
+                if (name != null && name.length() > searchPosition) {
                     Character testedChar = name.charAt(searchPosition);
                     String testedChars = characters[index];
                     for (int i = 0; i < testedChars.length(); ++i) {
@@ -1129,6 +1130,7 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
         if (enabled) {
             // Log.i(TAG, "Showing dialpad chooser!");
             mDigits.setVisibility(View.GONE);
+            mResultList.setVisibility(View.GONE);
             if (mDialpad != null) mDialpad.setVisibility(View.GONE);
             mVoicemailDialAndDeleteRow.setVisibility(View.GONE);
             mDialpadChooser.setVisibility(View.VISIBLE);
@@ -1142,6 +1144,7 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
         } else {
             // Log.i(TAG, "Displaying normal Dialer UI.");
             mDigits.setVisibility(View.VISIBLE);
+            mResultList.setVisibility(View.VISIBLE);
             if (mDialpad != null) mDialpad.setVisibility(View.VISIBLE);
             mVoicemailDialAndDeleteRow.setVisibility(View.VISIBLE);
             mDialpadChooser.setVisibility(View.GONE);
