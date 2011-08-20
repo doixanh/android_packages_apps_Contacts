@@ -899,6 +899,7 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
                     introducedChars.remove(searchPosition);
                 }
                 keyPressed(KeyEvent.KEYCODE_DEL);
+                mResultListAdapter.notifyDataSetChanged();
                 break;
             }
             case R.id.dialButton: {
