@@ -141,6 +141,7 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
     private boolean mDTMFToneEnabled;
 
     private int searchPosition = 0;
+    private Collator mCollator;
     private Stack<ArrayList<String>> previousCursors = new Stack<ArrayList<String>>();
     private static final String[] characters = { "abc", "def", "ghi", "jkl", "mno", "pqrs", "tuv",
                                                  "wxyz" };
@@ -254,6 +255,9 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
         mDigits.setKeyListener(DialerKeyListener.getInstance());
         mDigits.setOnClickListener(this);
         mDigits.setOnKeyListener(this);
+
+        mCollator = Collator.getInstance();
+        mCollator.setStrength(Collator.PRIMARY);
 
         ListView resultList = (ListView) findViewById(R.id.resultList);
         mResultListAdapter = new ResultListAdapter(this, resultList);
@@ -785,9 +789,6 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
 
             ArrayList<String> contacts = previousCursors.peek();
 
-            Collator collator = Collator.getInstance();
-            collator.setStrength(Collator.PRIMARY);
-
             ArrayList<String> newContacts = new ArrayList<String>();
             Iterator<String> contactIt = contacts.iterator();
             while (contactIt.hasNext()) {
@@ -797,7 +798,7 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
                     String testedChars = characters[index];
                     for (int i = 0; i < testedChars.length(); ++i) {
                         Character testedChar2 = testedChars.charAt(i);
-                        if (collator.compare(testedChar.toString(), testedChar2.toString()) == 0) {
+                        if (mCollator.compare(testedChar.toString(), testedChar2.toString()) == 0) {
                             newContacts.add(name);
                             break;
                         }
