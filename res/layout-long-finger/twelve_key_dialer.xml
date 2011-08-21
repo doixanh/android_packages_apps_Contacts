@@ -37,7 +37,7 @@
         android:background="@drawable/btn_dial_textfield"
         android:textColor="@color/dialer_button_text"
         android:focusableInTouchMode="true"
-        android:editable="true"
+        android:editable="false"
         android:cursorVisible="false"
         android:layout_weight="0"
     />
