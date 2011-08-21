@@ -31,7 +31,7 @@
     -->
     <ImageButton android:id="@+id/voicemailButton"
         android:layout_width="87dip"
-        android:layout_height="58dip"
+        android:layout_height="40dip"
         android:layout_gravity="center_vertical"
         android:state_enabled="false"
         android:background="@drawable/btn_dial_voicemail"
@@ -43,7 +43,7 @@
          config.xml.) -->
     <ImageButton android:id="@+id/dialButton"
         android:layout_width="116dip"
-        android:layout_height="58dip"
+        android:layout_height="40dip"
         android:layout_gravity="center_vertical"
         android:state_enabled="false"
         android:background="@drawable/btn_dial_action"
@@ -56,7 +56,7 @@
     -->
     <ImageButton android:id="@+id/deleteButton"
         android:layout_width="87dip"
-        android:layout_height="58dip"
+        android:layout_height="40dip"
         android:layout_gravity="center_vertical"
         android:state_enabled="false"
         android:background="@drawable/btn_dial_delete"
