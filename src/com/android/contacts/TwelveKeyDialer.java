@@ -70,6 +70,10 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.provider.ContactsContract;
+import android.content.ContentUris;
+import android.text.Spannable;
+import android.text.style.BackgroundColorSpan;
+import android.text.style.ForegroundColorSpan;
 
 import com.android.internal.telephony.ITelephony;
 
@@ -87,7 +91,6 @@ import java.util.Iterator;
 import java.util.ListIterator;
 import java.util.Stack;
 import java.text.Collator;
-import android.content.ContentUris;
 import java.io.InputStream;
 
 /**
@@ -187,6 +190,7 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
 
     private class ContactInfo {
         public String name;
+        public String phone;
         public long   icon;
     };
 
@@ -270,6 +274,17 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
         mResultList = (ListView) findViewById(R.id.resultList);
         mResultListAdapter = new ResultListAdapter(this, mResultList);
         mResultList.setAdapter(mResultListAdapter);
+        mResultList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> arg0, View arg1, int position, long arg3) {
+                if (previousCursors.empty()) {
+                    return;
+                }
+                ArrayList<ContactInfo> contacts = previousCursors.peek();
+                mDigits.setText(contacts.get(position).phone);
+                dialButtonPressed();
+            }
+        });
 
         maybeAddNumberFormatting();
 
@@ -789,13 +804,20 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
                 Cursor c = managedQuery(ContactsContract.Contacts.CONTENT_URI, null, null, null, null);
                 while (c.moveToNext()) {
                     if (Integer.parseInt(c.getString(c.getColumnIndex(ContactsContract.Contacts.HAS_PHONE_NUMBER))) > 0) {
+                        long id = c.getLong(c.getColumnIndex(ContactsContract.Contacts._ID));
                         ContactInfo contactInfo = new ContactInfo();
                         contactInfo.name = c.getString(c.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
-                        contactInfo.icon = c.getLong(c.getColumnIndex(ContactsContract.Contacts._ID));
+                        Cursor phones = getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null, ContactsContract.CommonDataKinds.Phone.CONTACT_ID + "=" + id, null, null);
+                        while (phones.moveToNext()) { 
+                            String phoneNumber = phones.getString(phones.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
+                            contactInfo.phone = phoneNumber;
+                        }
+                        contactInfo.icon = id;
                         contacts.add(contactInfo);
                     }
                 }
                 previousCursors.push(contacts);
+                c.close();
             }
 
             ArrayList<ContactInfo> contacts = previousCursors.peek();
@@ -829,9 +851,9 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
         Uri uri = ContentUris.withAppendedId(ContactsContract.Contacts.CONTENT_URI, id);
         InputStream input = ContactsContract.Contacts.openContactPhotoInputStream(getContentResolver(), uri);
         if (input == null) {
-            return BitmapFactory.decodeResource(getResources(), R.drawable.ic_contact_picture);
+            return Bitmap.createScaledBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ic_contact_picture), 38, 38, true);
         }
-        return BitmapFactory.decodeStream(input);
+        return Bitmap.createScaledBitmap(BitmapFactory.decodeStream(input), 38, 38, true);
     }
 
     public boolean onKey(View view, int keyCode, KeyEvent event) {
@@ -1306,7 +1328,10 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
                 convertView = mInflater.inflate(R.layout.dialpad_chooser_list_item_small, null);
             }
             TextView text = (TextView) convertView.findViewById(R.id.text);
-            text.setText(previousCursors.peek().get(position).name);
+            text.setText(previousCursors.peek().get(position).name, TextView.BufferType.SPANNABLE);
+            Spannable resultToSpan = (Spannable) text.getText();
+            resultToSpan.setSpan(new BackgroundColorSpan(android.graphics.Color.YELLOW), 0, searchPosition, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            resultToSpan.setSpan(new ForegroundColorSpan(android.graphics.Color.BLACK), 0, searchPosition, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             ImageView icon = (ImageView) convertView.findViewById(R.id.icon);
             icon.setImageBitmap(loadContactPhoto(previousCursors.peek().get(position).icon));
             return convertView;

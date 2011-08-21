@@ -19,14 +19,14 @@
     android:orientation="horizontal"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingTop="7dp"
-    android:paddingBottom="7dp"
-    android:paddingLeft="7dp"
-    android:paddingRight="7dp" >
+    android:paddingTop="0.5dp"
+    android:paddingBottom="0.5dp"
+    android:paddingLeft="0.5dp"
+    android:paddingRight="0.5dp" >
 
     <ImageView android:id="@+id/icon"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
+        android:layout_width="38dp"
+        android:layout_height="38dp"
         android:scaleType="center" />
 
     <TextView android:id="@+id/text"
@@ -35,6 +35,6 @@
         android:layout_width="0dip"
         android:layout_weight="1"
         android:layout_height="wrap_content"
-        android:paddingLeft="7dp" />
+        android:paddingLeft="0.5dp" />
 
 </LinearLayout>
