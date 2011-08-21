@@ -191,7 +191,7 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
     private class ContactInfo {
         public String name;
         public String phone;
-        public long   icon;
+        public long   id;
     };
 
     PhoneStateListener mPhoneStateListener = new PhoneStateListener() {
@@ -281,7 +281,14 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
                     return;
                 }
                 ArrayList<ContactInfo> contacts = previousCursors.peek();
-                mDigits.setText(contacts.get(position).phone);
+                ContactInfo contact = contacts.get(position);
+                Cursor phones = getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null, ContactsContract.CommonDataKinds.Phone.CONTACT_ID + "=" + contact.id, null, null);
+                while (phones.moveToNext()) {
+                    String phoneNumber = phones.getString(phones.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
+                    mDigits.setText(phoneNumber);
+                    break;
+                }
+                phones.close();
                 dialButtonPressed();
             }
         });
@@ -807,12 +814,7 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
                         long id = c.getLong(c.getColumnIndex(ContactsContract.Contacts._ID));
                         ContactInfo contactInfo = new ContactInfo();
                         contactInfo.name = c.getString(c.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
-                        Cursor phones = getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, null, ContactsContract.CommonDataKinds.Phone.CONTACT_ID + "=" + id, null, null);
-                        while (phones.moveToNext()) { 
-                            String phoneNumber = phones.getString(phones.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
-                            contactInfo.phone = phoneNumber;
-                        }
-                        contactInfo.icon = id;
+                        contactInfo.id = id;
                         contacts.add(contactInfo);
                     }
                 }
@@ -1333,7 +1335,7 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
             resultToSpan.setSpan(new BackgroundColorSpan(android.graphics.Color.YELLOW), 0, searchPosition, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             resultToSpan.setSpan(new ForegroundColorSpan(android.graphics.Color.BLACK), 0, searchPosition, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             ImageView icon = (ImageView) convertView.findViewById(R.id.icon);
-            icon.setImageBitmap(loadContactPhoto(previousCursors.peek().get(position).icon));
+            icon.setImageBitmap(loadContactPhoto(previousCursors.peek().get(position).id));
             return convertView;
         }
     }
