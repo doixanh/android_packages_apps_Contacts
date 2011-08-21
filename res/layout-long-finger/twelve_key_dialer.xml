@@ -44,7 +44,7 @@
 
     <ListView android:id="@+id/resultList"
         android:layout_width="match_parent"
-        android:layout_height="74dip"
+        android:layout_height="80dip"
     />
 
     <!-- Keypad section -->

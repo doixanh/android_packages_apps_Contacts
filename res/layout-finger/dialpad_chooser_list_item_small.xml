@@ -21,8 +21,8 @@
     android:layout_height="match_parent">
 
     <ImageView android:id="@+id/icon"
-        android:layout_width="32dp"
-        android:layout_height="32dp"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
         android:scaleType="center" />
 
     <TextView android:id="@+id/text"
@@ -30,6 +30,7 @@
         android:layout_gravity="center_vertical"
         android:layout_width="0dip"
         android:layout_weight="1"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:paddingLeft="7dp" />
 
 </LinearLayout>

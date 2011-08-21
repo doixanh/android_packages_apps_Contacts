@@ -87,6 +87,8 @@ import java.util.Iterator;
 import java.util.ListIterator;
 import java.util.Stack;
 import java.text.Collator;
+import android.content.ContentUris;
+import java.io.InputStream;
 
 /**
  * Dialer activity that displays the typical twelve key interface.
@@ -142,7 +144,7 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
 
     private int searchPosition = 0;
     private Collator mCollator;
-    private Stack<ArrayList<String>> previousCursors = new Stack<ArrayList<String>>();
+    private Stack<ArrayList<ContactInfo>> previousCursors = new Stack<ArrayList<ContactInfo>>();
     private static final String[] characters = { "abc", "def", "ghi", "jkl", "mno", "pqrs", "tuv",
                                                  "wxyz" };
     private ListView mResultList;
@@ -182,6 +184,11 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
 
     /** Indicates if we are opening this dialer to add a call from the InCallScreen. */
     private boolean mIsAddCallMode;
+
+    private class ContactInfo {
+        public String name;
+        public long   icon;
+    };
 
     PhoneStateListener mPhoneStateListener = new PhoneStateListener() {
             /**
@@ -778,29 +785,32 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
         }
         if (index > -1) {
             if (previousCursors.empty()) {
-                ArrayList<String> contacts = new ArrayList<String>();
+                ArrayList<ContactInfo> contacts = new ArrayList<ContactInfo>();
                 Cursor c = managedQuery(ContactsContract.Contacts.CONTENT_URI, null, null, null, null);
                 while (c.moveToNext()) {
                     if (Integer.parseInt(c.getString(c.getColumnIndex(ContactsContract.Contacts.HAS_PHONE_NUMBER))) > 0) {
-                        contacts.add(c.getString(c.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME)));
+                        ContactInfo contactInfo = new ContactInfo();
+                        contactInfo.name = c.getString(c.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
+                        contactInfo.icon = c.getLong(c.getColumnIndex(ContactsContract.Contacts._ID));
+                        contacts.add(contactInfo);
                     }
                 }
                 previousCursors.push(contacts);
             }
 
-            ArrayList<String> contacts = previousCursors.peek();
+            ArrayList<ContactInfo> contacts = previousCursors.peek();
 
-            ArrayList<String> newContacts = new ArrayList<String>();
-            Iterator<String> contactIt = contacts.iterator();
+            ArrayList<ContactInfo> newContacts = new ArrayList<ContactInfo>();
+            Iterator<ContactInfo> contactIt = contacts.iterator();
             while (contactIt.hasNext()) {
-                String name = contactIt.next();
-                if (name != null && name.length() > searchPosition) {
-                    Character testedChar = name.charAt(searchPosition);
+                ContactInfo contactInfo = contactIt.next();
+                if (contactInfo.name != null && contactInfo.name.length() > searchPosition) {
+                    Character testedChar = contactInfo.name.charAt(searchPosition);
                     String testedChars = characters[index];
                     for (int i = 0; i < testedChars.length(); ++i) {
                         Character testedChar2 = testedChars.charAt(i);
                         if (mCollator.compare(testedChar.toString(), testedChar2.toString()) == 0) {
-                            newContacts.add(name);
+                            newContacts.add(contactInfo);
                             break;
                         }
                     }
@@ -813,6 +823,15 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
         }
         KeyEvent event = new KeyEvent(KeyEvent.ACTION_DOWN, keyCode);
         mDigits.onKeyDown(keyCode, event);
+    }
+
+    private Bitmap loadContactPhoto(long id) {
+        Uri uri = ContentUris.withAppendedId(ContactsContract.Contacts.CONTENT_URI, id);
+        InputStream input = ContactsContract.Contacts.openContactPhotoInputStream(getContentResolver(), uri);
+        if (input == null) {
+            return BitmapFactory.decodeResource(getResources(), R.drawable.ic_contact_picture);
+        }
+        return BitmapFactory.decodeStream(input);
     }
 
     public boolean onKey(View view, int keyCode, KeyEvent event) {
@@ -896,7 +915,7 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
                     previousCursors.pop();
                 }
                 if (searchPosition == 0) {
-                    previousCursors = new Stack<ArrayList<String>>();
+                    previousCursors = new Stack<ArrayList<ContactInfo>>();
                 }
                 keyPressed(KeyEvent.KEYCODE_DEL);
                 mResultListAdapter.notifyDataSetChanged();
@@ -958,7 +977,7 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
                 //Wysie: Invoke checkForNumber() to disable button
                 checkForNumber();
                 searchPosition = 0;
-                previousCursors = new Stack<ArrayList<String>>();
+                previousCursors = new Stack<ArrayList<ContactInfo>>();
                 mResultListAdapter.notifyDataSetChanged();
                 // TODO: The framework forgets to clear the pressed
                 // status of disabled button. Until this is fixed,
@@ -1287,7 +1306,9 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
                 convertView = mInflater.inflate(R.layout.dialpad_chooser_list_item_small, null);
             }
             TextView text = (TextView) convertView.findViewById(R.id.text);
-            text.setText(previousCursors.peek().get(position));
+            text.setText(previousCursors.peek().get(position).name);
+            ImageView icon = (ImageView) convertView.findViewById(R.id.icon);
+            icon.setImageBitmap(loadContactPhoto(previousCursors.peek().get(position).icon));
             return convertView;
         }
     }
