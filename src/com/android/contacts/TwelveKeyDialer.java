@@ -68,7 +68,6 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 import android.provider.ContactsContract;
 import android.content.ContentUris;
 import android.text.Spannable;
@@ -78,6 +77,13 @@ import com.android.contacts.PhoneDisambigDialog;
 
 import com.android.internal.telephony.ITelephony;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.ListIterator;
+import java.util.Stack;
+import java.text.Collator;
+import java.io.InputStream;
+
 //Wysie
 import android.content.ComponentName;
 import android.content.res.ColorStateList;
@@ -86,13 +92,6 @@ import android.graphics.Color;
 import android.preference.PreferenceManager;
 import android.provider.CallLog.Calls;
 import android.widget.ImageButton;
-
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.ListIterator;
-import java.util.Stack;
-import java.text.Collator;
-import java.io.InputStream;
 
 /**
  * Dialer activity that displays the typical twelve key interface.
@@ -244,66 +243,6 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
         updateDialAndDeleteButtonEnabledState();
     }
 
-    private Cursor queryPhoneNumbers(long contactId) {
-        Uri baseUri = ContentUris.withAppendedId(ContactsContract.Contacts.CONTENT_URI, contactId);
-        Uri dataUri = Uri.withAppendedPath(baseUri, ContactsContract.Contacts.Data.CONTENT_DIRECTORY);
-        Cursor c = getContentResolver().query(dataUri,
-                new String[] {ContactsContract.CommonDataKinds.Phone._ID, ContactsContract.CommonDataKinds.Phone.NUMBER, ContactsContract.CommonDataKinds.Phone.IS_SUPER_PRIMARY,
-                        ContactsContract.RawContacts.ACCOUNT_TYPE, ContactsContract.CommonDataKinds.Phone.TYPE, ContactsContract.CommonDataKinds.Phone.LABEL},
-                ContactsContract.Contacts.Data.MIMETYPE + "=?", new String[] {ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE}, null);
-        if (c != null) {
-            if (c.moveToFirst()) {
-                return c;
-            }
-            c.close();
-        }
-        return null;
-    }
-
-    boolean callContact(long contactId) {
-        String phone = null;
-        Cursor phonesCursor = null;
-        phonesCursor = queryPhoneNumbers(contactId);
-        if (phonesCursor == null || phonesCursor.getCount() == 0) {
-            Log.i(TAG, "could not fetch phone numbers");
-            return false;
-        } else if (phonesCursor.getCount() == 1) {
-            Log.i(TAG, "only one number");
-            // only one number, call it.
-            phone = phonesCursor.getString(phonesCursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
-        } else {
-            Log.i(TAG, "several numbers");
-            phonesCursor.moveToPosition(-1);
-            while (phonesCursor.moveToNext()) {
-                if (phonesCursor.getInt(phonesCursor.
-                    getColumnIndex(ContactsContract.CommonDataKinds.Phone.IS_SUPER_PRIMARY)) != 0) {
-                    // Found super primary, call it.
-                    phone = phonesCursor.getString(phonesCursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
-                    break;
-                }
-            }
-        }
-
-        if (phone == null) {
-            Log.i(TAG, "phone disambiguation");
-            // Display dialog to choose a number to call.
-            PhoneDisambigDialog phoneDialog = new PhoneDisambigDialog(
-                            this, phonesCursor, false, StickyTabs.getTab(getIntent()));
-            phoneDialog.show();
-        } else {
-            Log.i(TAG, "starting call");
-            ContactsUtils.initiateCall(this, phone);
-        }
-
-        // Close the phoneCursor after its use
-        if (phonesCursor != null) {
-            Log.i(TAG, "closing cursor");
-            phonesCursor.close();
-        }
-
-        return true;
-    }
-
     @Override
     protected void onCreate(Bundle icicle) {
         super.onCreate(icicle);
@@ -335,6 +274,7 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
         mResultList = (ListView) findViewById(R.id.resultList);
         mResultListAdapter = new ResultListAdapter(this, mResultList);
         mResultList.setAdapter(mResultListAdapter);
+        final Context context = this;
         mResultList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> arg1, View arg2, int position, long arg4) {
@@ -343,7 +283,7 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
                 }
                 ArrayList<ContactInfo> contacts = previousCursors.peek();
                 ContactInfo contact = contacts.get(position);
-                callContact(contact.id);
+                ContactsUtils.callContact(contact.id, context, StickyTabs.getTab(getIntent()));
             }
         });
 
@@ -865,10 +805,10 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
                 Cursor c = managedQuery(ContactsContract.Contacts.CONTENT_URI, null, null, null, null);
                 while (c.moveToNext()) {
                     if (Integer.parseInt(c.getString(c.getColumnIndex(ContactsContract.Contacts.HAS_PHONE_NUMBER))) > 0) {
-                        long id = c.getLong(c.getColumnIndex(ContactsContract.Contacts._ID));
+                        long contactId = c.getLong(c.getColumnIndex(ContactsContract.Contacts._ID));
                         ContactInfo contactInfo = new ContactInfo();
                         contactInfo.name = c.getString(c.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
-                        contactInfo.id = id;
+                        contactInfo.id = contactId;
                         contacts.add(contactInfo);
                     }
                 }
