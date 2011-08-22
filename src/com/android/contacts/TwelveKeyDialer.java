@@ -190,7 +190,6 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
 
     private class ContactInfo {
         public String name;
-        public String phone;
         public long   id;
     };
 
