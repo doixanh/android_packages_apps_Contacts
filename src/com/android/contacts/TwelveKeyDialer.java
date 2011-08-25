@@ -298,6 +298,7 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
                     } else {
                         ContactsUtils.callContact(contact.id, context, StickyTabs.getTab(getIntent()));
                     }
+                    mDigits.getText().clear();
                 }
             });
         }
