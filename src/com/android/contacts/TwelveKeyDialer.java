@@ -831,6 +831,15 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
                 mIntroducedNumbers += '9';
                 index = 7;
                 break;
+            case KeyEvent.KEYCODE_STAR:
+                mIntroducedNumbers += '*';
+                break;
+            case KeyEvent.KEYCODE_PLUS:
+                mIntroducedNumbers += '+';
+                break;
+            case KeyEvent.KEYCODE_POUND:
+                mIntroducedNumbers += '#';
+                break;
             default:
                 break;
         }
