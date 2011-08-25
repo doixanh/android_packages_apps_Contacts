@@ -786,6 +786,11 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
     }
 
     private void keyPressed(int keyCode) {
+        if (mResultList == null) {
+            keyPressed_(keyCode);
+            return;
+        }
+
         int index = -1;
         switch (keyCode) {
             case KeyEvent.KEYCODE_0:
@@ -897,6 +902,10 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
 
         mResultListAdapter.notifyDataSetChanged();
 
+        keyPressed_(keyCode);
+    }
+
+    private void keyPressed_(int keyCode) {
         KeyEvent event = new KeyEvent(KeyEvent.ACTION_DOWN, keyCode);
         mDigits.onKeyDown(keyCode, event);
     }
