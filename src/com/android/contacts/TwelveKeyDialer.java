@@ -154,6 +154,7 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
                                                  "7pqrs", "8tuv", "9wxyz", "*", "0", "+", "#" };
     private ListView mResultList;
     private ResultListAdapter mResultListAdapter;
+    private boolean mSmartDialingEnabled;
 
     // Vibration (haptic feedback) for dialer key presses.
     private Vibrator mVibrator;
@@ -597,6 +598,7 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
         mVibratePattern = stringToLongArray(Settings.System.getString(getContentResolver(), Settings.System.HAPTIC_TAP_ARRAY));
         retrieveLastDialled = ePrefs.getBoolean("dial_retrieve_last", false);
         returnToDialer = ePrefs.getBoolean("dial_return", false);
+        mSmartDialingEnabled = ePrefs.getBoolean("dial_enable_smart_dialing", true);
 
         updateDialAndDeleteButtonEnabledState();
         updateDialer();
@@ -788,7 +790,7 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
     }
 
     private void keyPressed(int keyCode) {
-        if (mResultList == null || keyCode == KeyEvent.KEYCODE_DEL) {
+        if (!mSmartDialingEnabled || mResultList == null || keyCode == KeyEvent.KEYCODE_DEL) {
             keyPressed_(keyCode);
             return;
         }
@@ -1009,17 +1011,21 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
                 break;
             }
             case R.id.deleteButton: {
-                if (searchPosition > 0) {
-                    searchPosition--;
-                    previousCursors.pop();
-                    mIntroducedNumbers = mIntroducedNumbers.substring(0, mIntroducedNumbers.length() - 1);
-                }
-                if (searchPosition == 0) {
-                    mIntroducedNumbers = new String();
-                    previousCursors = new Stack<ArrayList<ContactInfo>>();
+                if (mSmartDialingEnabled) {
+                    if (searchPosition > 0) {
+                        searchPosition--;
+                        previousCursors.pop();
+                        mIntroducedNumbers = mIntroducedNumbers.substring(0, mIntroducedNumbers.length() - 1);
+                    }
+                    if (searchPosition == 0) {
+                        mIntroducedNumbers = new String();
+                        previousCursors = new Stack<ArrayList<ContactInfo>>();
+                    }
                 }
                 keyPressed(KeyEvent.KEYCODE_DEL);
-                mResultListAdapter.notifyDataSetChanged();
+                if (mSmartDialingEnabled) {
+                    mResultListAdapter.notifyDataSetChanged();
+                }
                 break;
             }
             case R.id.dialButton: {
@@ -1070,10 +1076,12 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
     }
 
     private void cleanResultListView() {
-        searchPosition = 0;
-        mIntroducedNumbers = new String();
-        previousCursors = new Stack<ArrayList<ContactInfo>>();
-        mResultListAdapter.notifyDataSetChanged();
+        if (mSmartDialingEnabled) {
+            searchPosition = 0;
+            mIntroducedNumbers = new String();
+            previousCursors = new Stack<ArrayList<ContactInfo>>();
+            mResultListAdapter.notifyDataSetChanged();
+        }
     }
 
     public boolean onLongClick(View view) {
@@ -1756,6 +1764,15 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
     	initVoicemailButton();
     	checkForNumber();
     	setDigitsColor();
+
+        if (mSmartDialingEnabled) {
+            mResultList = (ListView) findViewById(R.id.resultList);
+            mResultList.setVisibility(View.VISIBLE);
+            cleanResultListView();
+        } else if (mResultList != null) {
+            mResultList.setVisibility(View.GONE);
+            mResultList = null;
+        }
 
         // The voicemail number might have been set after the app was started
         if (mHasVoicemail != hasVoicemail()) {
