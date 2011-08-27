@@ -84,6 +84,7 @@ import java.util.ListIterator;
 import java.util.Stack;
 import java.text.Collator;
 import java.io.InputStream;
+import java.util.HashMap;
 
 //Wysie
 import android.content.ComponentName;
@@ -150,8 +151,7 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
     private String mIntroducedNumbers;
     private Collator mCollator;
     private Stack<ArrayList<ContactInfo>> previousCursors = new Stack<ArrayList<ContactInfo>>();
-    private static final String[] characters = { "1 ", "2abc", "3def", "4ghi", "5jkl", "6mno",
-                                                 "7pqrs", "8tuv", "9wxyz", "*", "0", "+", "#" };
+    private static final HashMap<Integer, String> mCharacters = new HashMap<Integer, String>();
     private ListView mResultList;
     private ResultListAdapter mResultListAdapter;
     private boolean mSmartDialingEnabled;
@@ -283,6 +283,20 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
 
         mCollator = Collator.getInstance();
         mCollator.setStrength(Collator.PRIMARY);
+
+        mCharacters.put(KeyEvent.KEYCODE_1, "1");
+        mCharacters.put(KeyEvent.KEYCODE_2, "2abc");
+        mCharacters.put(KeyEvent.KEYCODE_3, "3def");
+        mCharacters.put(KeyEvent.KEYCODE_4, "4ghi");
+        mCharacters.put(KeyEvent.KEYCODE_5, "5jkl");
+        mCharacters.put(KeyEvent.KEYCODE_6, "6mno");
+        mCharacters.put(KeyEvent.KEYCODE_7, "7pqrs");
+        mCharacters.put(KeyEvent.KEYCODE_8, "8tuv");
+        mCharacters.put(KeyEvent.KEYCODE_9, "9wxyz");
+        mCharacters.put(KeyEvent.KEYCODE_STAR, "*");
+        mCharacters.put(KeyEvent.KEYCODE_0, "0");
+        mCharacters.put(KeyEvent.KEYCODE_PLUS, "+");
+        mCharacters.put(KeyEvent.KEYCODE_POUND, "#");
 
         mResultList = (ListView) findViewById(R.id.resultList);
         if (mResultList != null) {
@@ -798,66 +812,52 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
             return;
         }
 
-        int index = -1;
         switch (keyCode) {
             case KeyEvent.KEYCODE_1:
                 mIntroducedNumbers += '1';
-                index = 0;
                 break;
             case KeyEvent.KEYCODE_2:
                 mIntroducedNumbers += '2';
-                index = 1;
                 break;
             case KeyEvent.KEYCODE_3:
                 mIntroducedNumbers += '3';
-                index = 2;
                 break;
             case KeyEvent.KEYCODE_4:
                 mIntroducedNumbers += '4';
-                index = 3;
                 break;
             case KeyEvent.KEYCODE_5:
                 mIntroducedNumbers += '5';
-                index = 4;
                 break;
             case KeyEvent.KEYCODE_6:
                 mIntroducedNumbers += '6';
-                index = 5;
                 break;
             case KeyEvent.KEYCODE_7:
                 mIntroducedNumbers += '7';
-                index = 6;
                 break;
             case KeyEvent.KEYCODE_8:
                 mIntroducedNumbers += '8';
-                index = 7;
                 break;
             case KeyEvent.KEYCODE_9:
                 mIntroducedNumbers += '9';
-                index = 8;
                 break;
             case KeyEvent.KEYCODE_STAR:
                 mIntroducedNumbers += '*';
-                index = 9;
                 break;
             case KeyEvent.KEYCODE_0:
                 mIntroducedNumbers += '0';
-                index = 10;
                 break;
             case KeyEvent.KEYCODE_PLUS:
                 mIntroducedNumbers += '+';
-                index = 11;
                 break;
             case KeyEvent.KEYCODE_POUND:
                 mIntroducedNumbers += '#';
-                index = 12;
                 break;
             default:
                 break;
         }
 
         if (mIntroducedNumbers.length() > 0) {
-            findMatchingContacts(KEY_PRESSED, keyCode, index);
+            findMatchingContacts(KEY_PRESSED, keyCode);
         }
 
         keyPressed_(keyCode);
@@ -865,10 +865,10 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
 
     private void findMatchingContacts()
     {
-        findMatchingContacts(KEY_NOT_PRESSED, -1, -1);
+        findMatchingContacts(KEY_NOT_PRESSED, -1);
     }
 
-    private void findMatchingContacts(int keyPressed, int keyCode, int index)
+    private void findMatchingContacts(int keyPressed, int keyCode)
     {
         if (keyPressed == KEY_NOT_PRESSED) {
             mResultListAdapter.notifyDataSetChanged();
@@ -919,7 +919,7 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
             if (contactInfo.matchType == MATCH_TYPE_NAME && contactInfo.name != null &&
                 contactInfo.name.length() > searchPosition) {
                 Character testedChar = contactInfo.name.charAt(searchPosition);
-                String testedChars = characters[index];
+                String testedChars = mCharacters.get(keyCode);
                 for (int i = 0; i < testedChars.length(); ++i) {
                     Character testedChar2 = testedChars.charAt(i);
                     if (mCollator.compare(testedChar.toString(), testedChar2.toString()) == 0) {
