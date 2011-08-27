@@ -1385,18 +1385,17 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
             if (previousCursors.empty() || previousCursors.peek().size() <= position) {
                 return null;
             }
+
             ContactInfo contactInfo = previousCursors.peek().get(position);
-            switch (contactInfo.matchType) {
-                case MATCH_TYPE_NAME:
-                case MATCH_TYPE_INITIALS:
-                    convertView = mInflater.inflate(R.layout.dialpad_chooser_list_item_small, null);
-                    break;
-                case MATCH_TYPE_NUMBER:
-                    convertView = mInflater.inflate(R.layout.dialpad_chooser_list_item_with_phone_small, null);
-                    break;
-            }
+            convertView = mInflater.inflate(R.layout.dialpad_chooser_list_item_small, null);
+
             TextView text = (TextView) convertView.findViewById(R.id.text);
             text.setText(contactInfo.name, TextView.BufferType.SPANNABLE);
+
+            if (contactInfo.matchType != MATCH_TYPE_NUMBER) {
+                TextView phone = (TextView) convertView.findViewById(R.id.phone);
+                phone.setVisibility(View.GONE);
+            }
 
             if (contactInfo.matchType == MATCH_TYPE_NAME) {
                 Spannable resultToSpan = (Spannable) text.getText();
