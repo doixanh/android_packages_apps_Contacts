@@ -148,7 +148,6 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
     private boolean mDTMFToneEnabled;
 
     private int searchPosition = 0;
-    private String mIntroducedNumbers;
     private Collator mCollator;
     private Stack<ArrayList<ContactInfo>> previousCursors = new Stack<ArrayList<ContactInfo>>();
     private static final HashMap<Integer, String> mCharacters = new HashMap<Integer, String>();
@@ -278,8 +277,6 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
         mDigits.setKeyListener(DialerKeyListener.getInstance());
         mDigits.setOnClickListener(this);
         mDigits.setOnKeyListener(this);
-
-        mIntroducedNumbers = new String();
 
         mCollator = Collator.getInstance();
         mCollator.setStrength(Collator.PRIMARY);
@@ -807,60 +804,16 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
     }
 
     private void keyPressed(int keyCode) {
-        if (!mSmartDialingEnabled || mResultList == null || keyCode == KeyEvent.KEYCODE_DEL) {
-            keyPressed_(keyCode);
-            return;
-        }
+        KeyEvent event = new KeyEvent(KeyEvent.ACTION_DOWN, keyCode);
+        mDigits.onKeyDown(keyCode, event);
 
-        switch (keyCode) {
-            case KeyEvent.KEYCODE_1:
-                mIntroducedNumbers += '1';
-                break;
-            case KeyEvent.KEYCODE_2:
-                mIntroducedNumbers += '2';
-                break;
-            case KeyEvent.KEYCODE_3:
-                mIntroducedNumbers += '3';
-                break;
-            case KeyEvent.KEYCODE_4:
-                mIntroducedNumbers += '4';
-                break;
-            case KeyEvent.KEYCODE_5:
-                mIntroducedNumbers += '5';
-                break;
-            case KeyEvent.KEYCODE_6:
-                mIntroducedNumbers += '6';
-                break;
-            case KeyEvent.KEYCODE_7:
-                mIntroducedNumbers += '7';
-                break;
-            case KeyEvent.KEYCODE_8:
-                mIntroducedNumbers += '8';
-                break;
-            case KeyEvent.KEYCODE_9:
-                mIntroducedNumbers += '9';
-                break;
-            case KeyEvent.KEYCODE_STAR:
-                mIntroducedNumbers += '*';
-                break;
-            case KeyEvent.KEYCODE_0:
-                mIntroducedNumbers += '0';
-                break;
-            case KeyEvent.KEYCODE_PLUS:
-                mIntroducedNumbers += '+';
-                break;
-            case KeyEvent.KEYCODE_POUND:
-                mIntroducedNumbers += '#';
-                break;
-            default:
-                break;
+        if (mSmartDialingEnabled && mResultList != null) {
+            if (mDigits.getText().length() > 0) {
+                findMatchingContacts(KEY_PRESSED, keyCode);
+            } else {
+                cleanResultListView();
+            }
         }
-
-        if (mIntroducedNumbers.length() > 0) {
-            findMatchingContacts(KEY_PRESSED, keyCode);
-        }
-
-        keyPressed_(keyCode);
     }
 
     private void findMatchingContacts()
@@ -896,7 +849,7 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
                                                          ContactsContract.Contacts.DISPLAY_NAME,
                                                          ContactsContract.CommonDataKinds.Phone.NUMBER },
                                            ContactsContract.CommonDataKinds.Phone.NUMBER + " like ?",
-                                           new String[]{ mIntroducedNumbers + '%' }, null);
+                                           new String[]{ mDigits.getText().toString() + '%' }, null);
             while (c.moveToNext()) {
                 ContactInfo contactInfo = new ContactInfo();
                 contactInfo.id = c.getLong(c.getColumnIndex(ContactsContract.Data.CONTACT_ID));
@@ -910,40 +863,34 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
             previousCursors.push(contacts);
         }
 
-        ArrayList<ContactInfo> contacts = previousCursors.peek();
-        ArrayList<ContactInfo> newContacts = new ArrayList<ContactInfo>();
-
-        Iterator<ContactInfo> contactIt = contacts.iterator();
-        while (contactIt.hasNext()) {
-            ContactInfo contactInfo = contactIt.next();
-            if (contactInfo.matchType == MATCH_TYPE_NAME && contactInfo.name != null &&
-                contactInfo.name.length() > searchPosition) {
-                Character testedChar = contactInfo.name.charAt(searchPosition);
-                String testedChars = mCharacters.get(keyCode);
-                for (int i = 0; i < testedChars.length(); ++i) {
-                    Character testedChar2 = testedChars.charAt(i);
-                    if (mCollator.compare(testedChar.toString(), testedChar2.toString()) == 0) {
-                        newContacts.add(contactInfo);
-                        break;
-                    }
-                }
-            } else if (contactInfo.matchType == MATCH_TYPE_NUMBER && contactInfo.number != null &&
-                contactInfo.number.startsWith(mIntroducedNumbers)) {
-                newContacts.add(contactInfo);
-            }
-        }
-
         if (keyCode != KeyEvent.KEYCODE_DEL) {
+            ArrayList<ContactInfo> contacts = previousCursors.peek();
+            ArrayList<ContactInfo> newContacts = new ArrayList<ContactInfo>();
+
+            Iterator<ContactInfo> contactIt = contacts.iterator();
+            while (contactIt.hasNext()) {
+                ContactInfo contactInfo = contactIt.next();
+                if (contactInfo.matchType == MATCH_TYPE_NAME && contactInfo.name != null &&
+                    contactInfo.name.length() > searchPosition) {
+                    Character testedChar = contactInfo.name.charAt(searchPosition);
+                    String testedChars = mCharacters.get(keyCode);
+                    for (int i = 0; i < testedChars.length(); ++i) {
+                        Character testedChar2 = testedChars.charAt(i);
+                        if (mCollator.compare(testedChar.toString(), testedChar2.toString()) == 0) {
+                            newContacts.add(contactInfo);
+                            break;
+                        }
+                    }
+                } else if (contactInfo.matchType == MATCH_TYPE_NUMBER && contactInfo.number != null &&
+                    contactInfo.number.startsWith(mDigits.getText().toString())) {
+                    newContacts.add(contactInfo);
+                }
+            }
             previousCursors.push(newContacts);
             searchPosition++;
         }
 
         mResultListAdapter.notifyDataSetChanged();
-    }
-
-    private void keyPressed_(int keyCode) {
-        KeyEvent event = new KeyEvent(KeyEvent.ACTION_DOWN, keyCode);
-        mDigits.onKeyDown(keyCode, event);
     }
 
     private Bitmap loadContactPhoto(long id) {
@@ -1035,10 +982,8 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
                     if (searchPosition > 0) {
                         searchPosition--;
                         previousCursors.pop();
-                        mIntroducedNumbers = mIntroducedNumbers.substring(0, mIntroducedNumbers.length() - 1);
                     }
                     if (searchPosition == 0) {
-                        mIntroducedNumbers = new String();
                         previousCursors = new Stack<ArrayList<ContactInfo>>();
                     }
                 }
@@ -1098,7 +1043,6 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
     private void cleanResultListView() {
         if (mSmartDialingEnabled) {
             searchPosition = 0;
-            mIntroducedNumbers = new String();
             previousCursors = new Stack<ArrayList<ContactInfo>>();
             if (mResultListAdapter != null) {
                 mResultListAdapter.notifyDataSetChanged();
