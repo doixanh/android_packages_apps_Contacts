@@ -20,6 +20,8 @@
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:layout_gravity="center_horizontal"
+    android:paddingTop="2dp"
+    android:paddingBottom="2dp"
     android:orientation="horizontal">
 
     <!-- Onscreen "Voicemail" button.
