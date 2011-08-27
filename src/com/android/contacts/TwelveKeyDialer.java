@@ -194,6 +194,8 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
     private static final int MATCH_TYPE_NAME = 0;
     private static final int MATCH_TYPE_INITIALS = 1;
     private static final int MATCH_TYPE_NUMBER = 2;
+    private static final int KEY_NOT_PRESSED = 0;
+    private static final int KEY_PRESSED = 1;
 
     private class ContactInfo {
         public long   id;
@@ -304,6 +306,7 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
                     cleanResultListView();
                 }
             });
+            findMatchingContacts();
         }
 
         maybeAddNumberFormatting();
@@ -853,6 +856,25 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
                 break;
         }
 
+        if (mIntroducedNumbers.length() > 0) {
+            findMatchingContacts(KEY_PRESSED, keyCode, index);
+        }
+
+        keyPressed_(keyCode);
+    }
+
+    private void findMatchingContacts()
+    {
+        findMatchingContacts(KEY_NOT_PRESSED, -1, -1);
+    }
+
+    private void findMatchingContacts(int keyPressed, int keyCode, int index)
+    {
+        if (keyPressed == KEY_NOT_PRESSED) {
+            mResultListAdapter.notifyDataSetChanged();
+            return;
+        }
+
         if (previousCursors.empty()) {
             ArrayList<ContactInfo> contacts = new ArrayList<ContactInfo>();
 
@@ -917,8 +939,6 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
         }
 
         mResultListAdapter.notifyDataSetChanged();
-
-        keyPressed_(keyCode);
     }
 
     private void keyPressed_(int keyCode) {
@@ -1080,7 +1100,9 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
             searchPosition = 0;
             mIntroducedNumbers = new String();
             previousCursors = new Stack<ArrayList<ContactInfo>>();
-            mResultListAdapter.notifyDataSetChanged();
+            if (mResultListAdapter != null) {
+                mResultListAdapter.notifyDataSetChanged();
+            }
         }
     }
 
@@ -1767,7 +1789,9 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
 
         if (mSmartDialingEnabled) {
             mResultList = (ListView) findViewById(R.id.resultList);
-            mResultList.setVisibility(View.VISIBLE);
+            if (mResultList != null) {
+                mResultList.setVisibility(View.VISIBLE);
+            }
             cleanResultListView();
         } else if (mResultList != null) {
             mResultList.setVisibility(View.GONE);
