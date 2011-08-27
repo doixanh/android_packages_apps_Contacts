@@ -1736,7 +1736,6 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
             if (mResultList != null) {
                 mResultList.setVisibility(View.VISIBLE);
             }
-            cleanResultListView();
         } else if (mResultList != null) {
             mResultList.setVisibility(View.GONE);
             mResultList = null;
