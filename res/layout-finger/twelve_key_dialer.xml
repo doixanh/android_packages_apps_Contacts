@@ -48,6 +48,8 @@
         android:layout_width="match_parent"
         android:layout_height="1dip"
         android:layout_weight="2"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
     />
 
     <!-- Keypad section -->
