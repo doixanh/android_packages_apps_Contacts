@@ -85,6 +85,8 @@ import java.util.Stack;
 import java.text.Collator;
 import java.io.InputStream;
 import java.util.HashMap;
+import java.util.Collections;
+import java.util.Comparator;
 
 //Wysie
 import android.content.ComponentName;
@@ -201,7 +203,13 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
         public String name;
         public String number;
         public int    matchType;
-    };
+    }
+
+    private class ContactInfoComparator implements Comparator<ContactInfo> {
+        public int compare(ContactInfo c1, ContactInfo c2) {
+            return mCollator.compare(c1.name, c2.name);
+        }
+    }
 
     PhoneStateListener mPhoneStateListener = new PhoneStateListener() {
             /**
@@ -859,6 +867,8 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
                 contacts.add(contactInfo);
             }
             c.close();
+
+            Collections.sort(contacts, new ContactInfoComparator());
 
             previousCursors.push(contacts);
         }
