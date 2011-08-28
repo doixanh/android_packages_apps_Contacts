@@ -289,7 +289,7 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
         mCollator = Collator.getInstance();
         mCollator.setStrength(Collator.PRIMARY);
 
-        mCharacters.put(KeyEvent.KEYCODE_1, "1");
+        mCharacters.put(KeyEvent.KEYCODE_1, "1 "); // trailing space in purpose
         mCharacters.put(KeyEvent.KEYCODE_2, "2abc");
         mCharacters.put(KeyEvent.KEYCODE_3, "3def");
         mCharacters.put(KeyEvent.KEYCODE_4, "4ghi");
