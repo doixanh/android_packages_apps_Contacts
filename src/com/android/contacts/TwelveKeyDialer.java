@@ -620,7 +620,8 @@ public class TwelveKeyDialer extends Activity implements View.OnClickListener,
         mVibratePattern = stringToLongArray(Settings.System.getString(getContentResolver(), Settings.System.HAPTIC_TAP_ARRAY));
         retrieveLastDialled = ePrefs.getBoolean("dial_retrieve_last", false);
         returnToDialer = ePrefs.getBoolean("dial_return", false);
-        mSmartDialingEnabled = ePrefs.getBoolean("dial_enable_smart_dialing", true);
+        mSmartDialingEnabled = (Settings.System.getInt(getContentResolver(), Settings.System.SMART_DIALER, 1) == 1);
+        //ePrefs.getBoolean("dial_enable_smart_dialing", true);
 
         updateDialAndDeleteButtonEnabledState();
         updateDialer();
