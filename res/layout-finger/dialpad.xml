@@ -32,8 +32,8 @@
             android:contentDescription="@string/description_image_button_one"
             android:paddingTop="0px"
             android:paddingBottom="0px"
-            android:paddingLeft="0px"
-            android:paddingRight="0px"
+            android:paddingLeft="15px"
+            android:paddingRight="15px"
         />
 
         <ImageButton android:id="@+id/two"
@@ -45,8 +45,8 @@
             android:contentDescription="@string/description_image_button_two"
             android:paddingTop="0px"
             android:paddingBottom="0px"
-            android:paddingLeft="0px"
-            android:paddingRight="0px"
+            android:paddingLeft="15px"
+            android:paddingRight="15px"
         />
 
         <ImageButton android:id="@+id/three"
@@ -58,8 +58,8 @@
             android:contentDescription="@string/description_image_button_three"
             android:paddingTop="0px"
             android:paddingBottom="0px"
-            android:paddingLeft="0px"
-            android:paddingRight="0px"
+            android:paddingLeft="15px"
+            android:paddingRight="15px"
         />
 
         <ImageButton android:id="@+id/four"
@@ -71,8 +71,8 @@
             android:contentDescription="@string/description_image_button_four"
             android:paddingTop="0px"
             android:paddingBottom="0px"
-            android:paddingLeft="0px"
-            android:paddingRight="0px"
+            android:paddingLeft="15px"
+            android:paddingRight="15px"
         />
 
         <ImageButton android:id="@+id/five"
@@ -84,8 +84,8 @@
             android:contentDescription="@string/description_image_button_five"
             android:paddingTop="0px"
             android:paddingBottom="0px"
-            android:paddingLeft="0px"
-            android:paddingRight="0px"
+            android:paddingLeft="15px"
+            android:paddingRight="15px"
         />
 
         <ImageButton android:id="@+id/six"
@@ -97,8 +97,8 @@
             android:contentDescription="@string/description_image_button_six"
             android:paddingTop="0px"
             android:paddingBottom="0px"
-            android:paddingLeft="0px"
-            android:paddingRight="0px"
+            android:paddingLeft="15px"
+            android:paddingRight="15px"
         />
 
         <ImageButton android:id="@+id/seven"
@@ -110,8 +110,8 @@
             android:contentDescription="@string/description_image_button_seven"
             android:paddingTop="0px"
             android:paddingBottom="0px"
-            android:paddingLeft="0px"
-            android:paddingRight="0px"
+            android:paddingLeft="15px"
+            android:paddingRight="15px"
         />
 
         <ImageButton android:id="@+id/eight"
@@ -123,8 +123,8 @@
             android:contentDescription="@string/description_image_button_eight"
             android:paddingTop="0px"
             android:paddingBottom="0px"
-            android:paddingLeft="0px"
-            android:paddingRight="0px"
+            android:paddingLeft="15px"
+            android:paddingRight="15px"
         />
 
         <ImageButton android:id="@+id/nine"
@@ -136,8 +136,8 @@
             android:contentDescription="@string/description_image_button_nine"
             android:paddingTop="0px"
             android:paddingBottom="0px"
-            android:paddingLeft="0px"
-            android:paddingRight="0px"
+            android:paddingLeft="15px"
+            android:paddingRight="15px"
         />
 
         <ImageButton android:id="@+id/star"
@@ -149,8 +149,8 @@
             android:contentDescription="@string/description_image_button_star"
             android:paddingTop="0px"
             android:paddingBottom="0px"
-            android:paddingLeft="0px"
-            android:paddingRight="0px"
+            android:paddingLeft="15px"
+            android:paddingRight="15px"
         />
 
         <ImageButton android:id="@+id/zero"
@@ -162,8 +162,8 @@
             android:contentDescription="@string/description_image_button_zero"
             android:paddingTop="0px"
             android:paddingBottom="0px"
-            android:paddingLeft="0px"
-            android:paddingRight="0px"
+            android:paddingLeft="15px"
+            android:paddingRight="15px"
         />
 
         <ImageButton android:id="@+id/pound"
@@ -175,7 +175,7 @@
             android:contentDescription="@string/description_image_button_pound"
             android:paddingTop="0px"
             android:paddingBottom="0px"
-            android:paddingLeft="0px"
-            android:paddingRight="0px"
+            android:paddingLeft="15px"
+            android:paddingRight="15px"
         />
 </com.android.phone.ButtonGridLayout>
