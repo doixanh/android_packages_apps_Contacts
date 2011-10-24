@@ -491,6 +491,14 @@ public class ContactsUtils {
         return TextUtils.equals(a.getAction(), b.getAction());
     }
 
+    public static boolean callContact(long contactId, Context context, int stickyTab) {
+        return callOrSmsContact(contactId, context, false, stickyTab);
+    }
+
+    public static boolean smsContact(long contactId, Context context, int stickyTab) {
+        return callOrSmsContact(contactId, context, true, stickyTab);
+    }
+
     /**
      * Calls the specified contact ID, displaying a number picker if necessary.
      * @return true if the call was initiated, false otherwise
@@ -539,7 +547,8 @@ public class ContactsUtils {
         Uri dataUri = Uri.withAppendedPath(baseUri, Contacts.Data.CONTENT_DIRECTORY);
 
         Cursor c = resolver.query(dataUri,
-                new String[] {Phone._ID, Phone.NUMBER, Phone.IS_SUPER_PRIMARY},
+                new String[] {Phone._ID, Phone.NUMBER, Phone.IS_SUPER_PRIMARY,
+                    RawContacts.ACCOUNT_TYPE, Phone.TYPE, Phone.LABEL},
                 Data.MIMETYPE + "=?", new String[] {Phone.CONTENT_ITEM_TYPE}, null);
         if (c != null && c.moveToFirst()) {
             return c;

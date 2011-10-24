@@ -785,7 +785,7 @@ public class ContactsListActivity extends ListActivity implements View.OnCreateC
             Uri telUri = null;
             if (sContactsIdMatcher.match(data) == CONTACTS_ID) {
                 long contactId = Long.valueOf(data.getLastPathSegment());
-                final Cursor cursor = queryPhoneNumbers(contactId);
+                final Cursor cursor = ContactsUtils.queryPhoneNumbers(getContentResolver(), contactId);
                 if (cursor != null) {
                     if (cursor.getCount() == 1 && cursor.moveToFirst()) {
                         int phoneNumberIndex = cursor.getColumnIndex(Phone.NUMBER);
@@ -974,7 +974,8 @@ public class ContactsListActivity extends ListActivity implements View.OnCreateC
                 Cursor c = mAdapter.getCursor();
                 if (c != null) {
                     c.moveToPosition(position);
-                    callContact(c);
+                    long contactId = c.getLong(c.getColumnIndex(ContactsContract.Contacts._ID));
+                    ContactsUtils.callContact(contactId, this, StickyTabs.getTab(getIntent()));
                 }
                 break;
             }
@@ -1714,12 +1715,14 @@ public class ContactsListActivity extends ListActivity implements View.OnCreateC
             }
 
             case MENU_ITEM_CALL: {
-                callContact(cursor);
+                long contactId = cursor.getLong(cursor.getColumnIndex(ContactsContract.Contacts._ID));
+                ContactsUtils.callContact(contactId, this, StickyTabs.getTab(getIntent()));
                 return true;
             }
 
             case MENU_ITEM_SEND_SMS: {
-                smsContact(cursor);
+                long contactId = cursor.getLong(cursor.getColumnIndex(ContactsContract.Contacts._ID));
+                ContactsUtils.smsContact(contactId, this, StickyTabs.getTab(getIntent()));
                 return true;
             }
 
@@ -2680,114 +2683,10 @@ public class ContactsListActivity extends ListActivity implements View.OnCreateC
         ListView list = getListView();
         if (list.hasFocus()) {
             Cursor cursor = (Cursor) list.getSelectedItem();
-            return callContact(cursor);
+            long contactId = cursor.getLong(cursor.getColumnIndex(ContactsContract.Contacts._ID));
+            return ContactsUtils.callContact(contactId, this, StickyTabs.getTab(getIntent()));
         }
         return false;
-    }
-
-    boolean callContact(Cursor cursor) {
-        return callOrSmsContact(cursor, false /*call*/);
-    }
-
-    boolean smsContact(Cursor cursor) {
-        return callOrSmsContact(cursor, true /*sms*/);
-    }
-
-    /**
-     * Calls the contact which the cursor is point to.
-     * @return true if the call was initiated, false otherwise
-     */
-    boolean callOrSmsContact(Cursor cursor, boolean sendSms) {
-        if (cursor == null) {
-            return false;
-        }
-
-        switch (mMode) {
-            case MODE_PICK_PHONE:
-            case MODE_LEGACY_PICK_PHONE:
-            case MODE_QUERY_PICK_PHONE: {
-                String phone = cursor.getString(PHONE_NUMBER_COLUMN_INDEX);
-                if (sendSms) {
-                    ContactsUtils.initiateSms(this, phone);
-                } else {
-                    ContactsUtils.initiateCall(this, phone);
-                }
-                return true;
-            }
-            case MODE_PICK_POSTAL:
-            case MODE_LEGACY_PICK_POSTAL: {
-                return false;
-            }
-
-            default: {
-
-                boolean hasPhone = cursor.getInt(SUMMARY_HAS_PHONE_COLUMN_INDEX) != 0;
-                if (!hasPhone) {
-                    // There is no phone number.
-                    signalError();
-                    return false;
-                }
-
-                String phone = null;
-                Cursor phonesCursor = null;
-                phonesCursor = queryPhoneNumbers(cursor.getLong(SUMMARY_ID_COLUMN_INDEX));
-                if (phonesCursor == null || phonesCursor.getCount() == 0) {
-                    // No valid number
-                    signalError();
-                    return false;
-                } else if (phonesCursor.getCount() == 1) {
-                    // only one number, call it.
-                    phone = phonesCursor.getString(phonesCursor.getColumnIndex(Phone.NUMBER));
-                } else {
-                    phonesCursor.moveToPosition(-1);
-                    while (phonesCursor.moveToNext()) {
-                        if (phonesCursor.getInt(phonesCursor.
-                                getColumnIndex(Phone.IS_SUPER_PRIMARY)) != 0) {
-                            // Found super primary, call it.
-                            phone = phonesCursor.
-                            getString(phonesCursor.getColumnIndex(Phone.NUMBER));
-                            break;
-                        }
-                    }
-                }
-
-                if (phone == null) {
-                    // Display dialog to choose a number to call.
-                    PhoneDisambigDialog phoneDialog = new PhoneDisambigDialog(
-                            this, phonesCursor, sendSms, StickyTabs.getTab(getIntent()));
-                    phoneDialog.show();
-                } else {
-                    if (sendSms) {
-                        ContactsUtils.initiateSms(this, phone);
-                    } else {
-                        StickyTabs.saveTab(this, getIntent());
-                        ContactsUtils.initiateCall(this, phone);
-                    }
-                }
-                // Close the phoneCursor after its use
-                if (phonesCursor != null) {
-                    phonesCursor.close();
-                }
-            }
-        }
-        return true;
-    }
-
-    private Cursor queryPhoneNumbers(ContentResolver resolver, long contactId) {
-        Uri baseUri = ContentUris.withAppendedId(Contacts.CONTENT_URI, contactId);
-        Uri dataUri = Uri.withAppendedPath(baseUri, Contacts.Data.CONTENT_DIRECTORY);
-
-        Cursor c = getContentResolver().query(dataUri,
-                new String[] {Phone._ID, Phone.NUMBER, Phone.IS_SUPER_PRIMARY,
-                        RawContacts.ACCOUNT_TYPE, Phone.TYPE, Phone.LABEL},
-                Data.MIMETYPE + "=?", new String[] {Phone.CONTENT_ITEM_TYPE}, null);
-        if (c != null) {
-            if (c.moveToFirst()) {
-                return c;
-            }
-            c.close();
-        }
-        return null;
     }
 
     // TODO: fix PluralRules to handle zero correctly and use Resources.getQuantityText directly
@@ -2798,9 +2697,6 @@ public class ContactsListActivity extends ListActivity implements View.OnCreateC
             String format = getResources().getQuantityText(pluralResourceId, count).toString();
             return String.format(format, count);
         }
-    }
-    private Cursor queryPhoneNumbers(long contactId) {
-        return queryPhoneNumbers(getContentResolver(), contactId);
     }
 
     /**

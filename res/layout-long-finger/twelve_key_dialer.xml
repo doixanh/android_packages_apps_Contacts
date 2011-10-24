@@ -36,10 +36,18 @@
         android:freezesText="true"
         android:background="@drawable/btn_dial_textfield"
         android:textColor="@color/dialer_button_text"
-        android:focusableInTouchMode="true"
-        android:editable="true"
+        android:focusableInTouchMode="false"
+        android:editable="false"
         android:cursorVisible="false"
         android:layout_weight="0"
+    />
+
+    <ListView android:id="@+id/resultList"
+        android:layout_width="match_parent"
+        android:layout_height="1dip"
+        android:layout_weight="2"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
     />
 
     <!-- Keypad section -->
